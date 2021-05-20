@@ -1,0 +1,17 @@
+{
+  "name": "Connect-Four",
+  "type": "3d",
+  "uuid": "89527d6e-e6c1-4bbb-a82e-fdd5ddea01ce",
+  "version": "3.1.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "regenerator-runtime": "^0.13.7"
+  },
+  "scripts": {
+    "dev":"nodemon --watch assets --exec 'curl http://localhost:7456/asset-db/refresh' -e ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
