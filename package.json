@@ -9,7 +9,7 @@
     "regenerator-runtime": "^0.13.7"
   },
   "scripts": {
-    "dev":"nodemon --watch assets --exec 'curl http://localhost:7456/asset-db/refresh' -e ts",
+    "dev": "nodemon --watch assets -e ts --exec curl http://localhost:7456/asset-db/refresh",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

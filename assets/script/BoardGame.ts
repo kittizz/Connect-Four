@@ -1,34 +1,50 @@
-import { _decorator, Component, Prefab, director, Vec3, Scene } from "cc"
-import store from "./store"
+import {
+    _decorator,
+    Component,
+    Prefab,
+    director,
+    Node,
+    Scene,
+    Animation,
+    AnimationClip,
+    instantiate,
+} from "cc"
+import flowAnimToY from "./animationClip/flowAnimToY"
 
 const { ccclass, property } = _decorator
+
+enum CoinColor {
+    RED,
+    BLUE,
+}
 
 @ccclass("BoardGame")
 export class BoardGame extends Component {
     coinDistance = 98
 
-    @property(Prefab)
-    coinRED: Prefab = null!
+    @property({ type: Prefab })
+    coinRED: Prefab = null
 
     @property(Prefab)
     coinBLUE: Prefab = null!
 
+    @property(AnimationClip)
+    flowAnim: AnimationClip = null!
+
     nodeGame: Scene
+    zinex = 0
+    board: Array<Node[]> = [
+        [null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null],
+    ]
 
     start() {
+        this.node.on(Node.EventType.MOUSE_UP, this.drawGame, this)
         this.nodeGame = director.getScene().getChildByPath("Canvas/bg/Game")
-        this.coinRED.createNode((err, n) => {
-            let pos = n.getPosition()
-
-            // n.setPosition(pos.add3f(0, this.coinDistance, 0))
-            
-            console.log(n.getPosition())
-
-            this.nodeGame.addChild(n)
-        })
-        this.coinBLUE.createNode((err, n) => {
-            this.nodeGame.addChild(n)
-        })
     }
 
     // update (deltaTime: number) {
@@ -36,30 +52,37 @@ export class BoardGame extends Component {
     // }
 
     drawGame() {
-        // const $winner = document.getElementById("winner")
-        // if (store.getState().winner) {
-        //     $winner.classList.add("player" + store.getState().winner)
-        //     $winner.classList.remove("hidden")
-        //     document.getElementById("turn").classList.add("hidden")
-        //     return
-        // }
-        // $winner.classList.add("hidden")
-        // const $board = document.getElementById("board")
-        // while ($board.firstChild) $board.removeChild($board.firstChild)
-        // store.getState().board.forEach((row) => {
-        //     const $row = document.createElement("tr")
-        //     row.forEach((piece) => {
-        //         // $piece = document.createElement("td")
-        //         // if (!piece) $piece.className = "empty"
-        //         // else if (piece === 1) $piece.className = "player1"
-        //         // else if (piece === 2) $piece.className = "player2"
-        //         // $row.appendChild($piece)
-        //     })
-        //     $board.appendChild($row)
-        // })
-        // const $player = document.getElementById("player")
-        // $player.textContent = "Player " + store.getState().player
-        // $player.className = "player" + store.getState().player
+        this.zinex--
+
+        let x = Math.floor(Math.random() * 7)
+        let y = Math.floor(Math.random() * 6)
+
+        this.addCoin(CoinColor.RED, x, y)
+    }
+    private addCoin(color: CoinColor, row: number, column: number) {
+        let node: Node
+        switch (color) {
+            case CoinColor.RED:
+                node = instantiate(this.coinRED)
+                break
+            case CoinColor.BLUE:
+                node = instantiate(this.coinBLUE)
+
+                break
+            default:
+                return
+        }
+        this.nodeGame.addChild(node)
+
+        let pos = node.getPosition()
+
+        node.setPosition(
+            pos.add3f(this.coinDistance * row, this.coinDistance * column, 0)
+        )
+        node.setSiblingIndex(-2 + this.zinex)
+        let ani = node.addComponent(Animation)
+        ani.defaultClip = flowAnimToY(pos.y)
+        ani.play()
     }
 }
 
