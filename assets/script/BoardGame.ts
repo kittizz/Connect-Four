@@ -10,13 +10,11 @@ import {
     instantiate,
 } from "cc"
 import flowAnimToY from "./animationClip/flowAnimToY"
-
+import { Pointer } from "./entity/EventType"
+import { CoinColor, GameAction, GameState } from "./entity/GameType"
+import { PointerTrigger } from "./PointerTrigger"
+import store from "./store"
 const { ccclass, property } = _decorator
-
-enum CoinColor {
-    RED,
-    BLUE,
-}
 
 @ccclass("BoardGame")
 export class BoardGame extends Component {
@@ -31,35 +29,57 @@ export class BoardGame extends Component {
     @property(AnimationClip)
     flowAnim: AnimationClip = null!
 
-    nodeGame: Scene
-    zinex = 0
-    board: Array<Node[]> = [
-        [null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null],
-    ]
+    nodeCoinsContainer: Scene
 
     start() {
-        this.node.on(Node.EventType.MOUSE_UP, this.drawGame, this)
-        this.nodeGame = director.getScene().getChildByPath("Canvas/bg/Game")
+        this.nodeCoinsContainer = director
+            .getScene()
+            .getChildByPath("Canvas/bg/Game/CoinsContainer")
+        this.node.on(Node.EventType.TOUCH_END, this.drawGame, this)
+        director.getScene().on(Pointer.Select_COL, this.onSelectCoin, this)
+
+        store.subscribe(() => {
+            console.log(store.getState())
+        })
     }
 
-    // update (deltaTime: number) {
-    //     // [4]
-    // }
-
+    onDestroy() {
+        this.node.off(Node.EventType.MOUSE_UP, this.drawGame, this)
+        director.getScene().off(Pointer.Select_COL, this.onSelectCoin)
+    }
+    newGame() {
+        this.nodeCoinsContainer.destroyAllChildren()
+        store.dispatch({ type: GameAction.NEW_GAME })
+    }
     drawGame() {
-        this.zinex--
-
         let x = Math.floor(Math.random() * 7)
         let y = Math.floor(Math.random() * 6)
-
-        this.addCoin(CoinColor.RED, x, y)
     }
-    private addCoin(color: CoinColor, row: number, column: number) {
+    private onSelectCoin($: PointerTrigger) {
+        let row = Math.floor(Math.random() * 6) // 0-5 6 ขั้นแนวนอน
+        let col = $.Col // 0-6 7 แถวแนวตั้ง
+
+        let gameState: GameState = store.getState()
+
+        if (
+            gameState.board.filter((e) => e[col] === CoinColor.BLANK).length ===
+            0
+        )
+            return
+        if (gameState.board[row][col] !== CoinColor.BLANK) {
+            this.onSelectCoin($)
+            return
+        }
+
+        let coin: CoinColor = Math.floor(Math.random() * 2)
+        this.addCoin(coin, row, col)
+    }
+    private addCoin(
+        color: CoinColor,
+        row: number,
+        column: number,
+        animation = true
+    ) {
         let node: Node
         switch (color) {
             case CoinColor.RED:
@@ -67,22 +87,28 @@ export class BoardGame extends Component {
                 break
             case CoinColor.BLUE:
                 node = instantiate(this.coinBLUE)
-
                 break
             default:
                 return
         }
-        this.nodeGame.addChild(node)
+
+        this.nodeCoinsContainer.addChild(node)
 
         let pos = node.getPosition()
-
         node.setPosition(
-            pos.add3f(this.coinDistance * row, this.coinDistance * column, 0)
+            pos.add3f(this.coinDistance * column, this.coinDistance * row, 0)
         )
-        node.setSiblingIndex(-2 + this.zinex)
-        let ani = node.addComponent(Animation)
-        ani.defaultClip = flowAnimToY(pos.y)
-        ani.play()
+
+        if (animation) {
+            let ani = node.addComponent(Animation)
+            ani.defaultClip = flowAnimToY(pos.y)
+            ani.play()
+        }
+
+        store.dispatch({
+            type: GameAction.ADD_COIN,
+            data: [row, column, color],
+        })
     }
 }
 

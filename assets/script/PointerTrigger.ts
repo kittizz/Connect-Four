@@ -1,4 +1,5 @@
-import { _decorator, Component, Node, EventTouch, Sprite, Prefab } from "cc"
+import { _decorator, Component, Node, Prefab, director, CCInteger } from "cc"
+import { Pointer } from "./entity/EventType"
 const { ccclass, property } = _decorator
 
 @ccclass("PointerTrigger")
@@ -13,16 +14,20 @@ export class PointerTrigger extends Component {
     @property(Prefab)
     pointerBLUE: Prefab = null
 
-    @property(Number)
+    @property(CCInteger)
     Col: number = null
+
     start() {
-        this.node.on(Node.EventType.MOUSE_ENTER, this.onTrigger, this)
+        // this.node.on(Node.EventType.MOUSE_UP, this.onTrigger, this)
         this.node.on(Node.EventType.TOUCH_END, this.onTrigger, this)
         // [3]
     }
-
+    onDestroy() {
+        // this.node.off(Node.EventType.MOUSE_UP, this.onTrigger, this)
+        this.node.off(Node.EventType.TOUCH_END, this.onTrigger, this)
+    }
     onTrigger() {
-        console.log("O", this.Col)
+        director.getScene().emit(Pointer.Select_COL, this)
     }
     // update (deltaTime: number) {
     //     // [4]

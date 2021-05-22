@@ -1,11 +1,9 @@
 // import { createGlobalState } from "speedux"
 
 import { state } from "./state"
+import { Store } from "redux"
+import { reducer } from "./reducer"
 
-// const create = createState(state)
+import redux from "redux/dist/redux.js"
 
-// export const dispatch = () => {
-//     state.board
-// }
-
-export default state
+export default <Store>redux.createStore(reducer, state)
