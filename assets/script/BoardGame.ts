@@ -8,12 +8,14 @@ import {
     Animation,
     AnimationClip,
     instantiate,
+    SpriteAtlas,
 } from "cc"
 import flowAnimToY from "./animationClip/flowAnimToY"
 import { Pointer } from "./entity/EventType"
-import { CoinColor, GameAction, GameState } from "./entity/GameType"
+import { BoardItem, CoinColor, GameAction, GameState } from "./entity/GameType"
 import { PointerTrigger } from "./PointerTrigger"
 import store from "./store"
+import { GetColCanDrop } from "./utils"
 const { ccclass, property } = _decorator
 
 @ccclass("BoardGame")
@@ -30,58 +32,96 @@ export class BoardGame extends Component {
     flowAnim: AnimationClip = null!
 
     nodeCoinsContainer: Scene
+    nodeTurnBlue: Scene
+    nodeTurnRed: Scene
 
     start() {
         this.nodeCoinsContainer = director
             .getScene()
             .getChildByPath("Canvas/bg/Game/CoinsContainer")
-        this.node.on(Node.EventType.TOUCH_END, this.drawGame, this)
-        director.getScene().on(Pointer.Select_COL, this.onSelectCoin, this)
+        this.nodeTurnRed = director
+            .getScene()
+            .getChildByPath("Canvas/bg/turn/turn-red")
+        this.nodeTurnBlue = director
+            .getScene()
+            .getChildByPath("Canvas/bg/turn/turn-blue")
 
+        // this.node.on(Node.EventType.TOUCH_END, this.drawGame, this)
+        director.getScene().on(Pointer.Select_COL, this.onSelectCoin, this)
         store.subscribe(() => {
-            console.log(store.getState())
+            let gState = store.getState()
+            console.log(gState)
+            this.turnBtnShow()
         })
+        store.dispatch({ type: GameAction.SET_TRUN, data: CoinColor.RED })
+        this.renderBoard()
     }
 
     onDestroy() {
-        this.node.off(Node.EventType.MOUSE_UP, this.drawGame, this)
+        // this.node.off(Node.EventType.MOUSE_UP, this.drawGame, this)
         director.getScene().off(Pointer.Select_COL, this.onSelectCoin)
+    }
+    private turnBtnShow() {
+        let gState = store.getState()
+
+        switch (gState.turn_is) {
+            case CoinColor.RED:
+                this.nodeTurnRed.active = true
+                this.nodeTurnBlue.active = false
+                break
+            case CoinColor.BLUE:
+                this.nodeTurnRed.active = false
+                this.nodeTurnBlue.active = true
+                break
+            default:
+                this.nodeTurnRed.active = false
+                this.nodeTurnBlue.active = false
+                break
+        }
     }
     newGame() {
         this.nodeCoinsContainer.destroyAllChildren()
         store.dispatch({ type: GameAction.NEW_GAME })
     }
-    drawGame() {
-        let x = Math.floor(Math.random() * 7)
-        let y = Math.floor(Math.random() * 6)
+    renderBoard() {
+        let gState: GameState = store.getState()
+        gState.board.forEach((row, rowIndex) => {
+            row.forEach((coin, colIndex) => {
+                if (
+                    gState.board[rowIndex][colIndex].coin_color ===
+                    CoinColor.BLANK
+                )
+                    return
+                this.addCoin(coin, rowIndex, colIndex, false)
+            })
+        })
     }
     private onSelectCoin($: PointerTrigger) {
-        let row = Math.floor(Math.random() * 6) // 0-5 6 ขั้นแนวนอน
         let col = $.Col // 0-6 7 แถวแนวตั้ง
 
-        let gameState: GameState = store.getState()
+        let gState: GameState = store.getState()
+        let row = GetColCanDrop(gState.board, col)[0]
 
         if (
-            gameState.board.filter((e) => e[col] === CoinColor.BLANK).length ===
-            0
+            gState.board.filter((e) => e[col].coin_color === CoinColor.BLANK)
+                .length === 0
         )
             return
-        if (gameState.board[row][col] !== CoinColor.BLANK) {
-            this.onSelectCoin($)
-            return
-        }
 
-        let coin: CoinColor = Math.floor(Math.random() * 2)
-        this.addCoin(coin, row, col)
+        let coin = gState.turn_is
+        // this.addCoin(coin, row, col)
+
+        store.dispatch({ type: GameAction.SWITCH_COLOR })
+        this.addCoin(<BoardItem>{ coin_color: coin }, row, col, true)
     }
     private addCoin(
-        color: CoinColor,
+        bItem: BoardItem,
         row: number,
         column: number,
-        animation = true
+        animation: boolean = true
     ) {
         let node: Node
-        switch (color) {
+        switch (bItem.coin_color) {
             case CoinColor.RED:
                 node = instantiate(this.coinRED)
                 break
@@ -91,24 +131,106 @@ export class BoardGame extends Component {
             default:
                 return
         }
-
         this.nodeCoinsContainer.addChild(node)
-
+        bItem.node = node
+        store.dispatch({
+            type: GameAction.ADD_COIN,
+            data: [row, column, bItem],
+        })
         let pos = node.getPosition()
         node.setPosition(
             pos.add3f(this.coinDistance * column, this.coinDistance * row, 0)
         )
 
         if (animation) {
-            let ani = node.addComponent(Animation)
+            let ani = node.getComponent(Animation)
             ani.defaultClip = flowAnimToY(pos.y)
+            ani.on(
+                Animation.EventType.FINISHED,
+                () => {
+                    if (this.checkWinner(bItem)) {
+                        // if (bItem.coin_color == CoinColor.RED) {
+                        //     alert("สีแดงชนะ")
+                        // } else {
+                        //     alert("สีน้ำเงินชนะ")
+                        // }
+                    }
+                },
+                this
+            )
             ani.play()
         }
+    }
+    test() {
+        this.checkWinner(<BoardItem>{ coin_color: CoinColor.BLUE })
+    }
+    private checkWinner(player: BoardItem) {
+        let gameWon = false
+        let gState: GameState = store.getState()
+        let posWin = []
+        const board = gState.board.map((row) =>
+            row.map((slot: BoardItem) => {
+                if (slot.coin_color === player.coin_color) return true
+                return false
+            })
+        )
+        for (let x1 = 0; x1 < board.length; x1++) {
+            for (let y1 = 0; y1 < board[x1].length; y1++) {
+                if (!board[x1][y1]) continue
+                const piece = [x1, y1]
+                this.adjacentPieces(board, piece).forEach(([x2, y2]) => {
+                    const direction = [x2 - x1, y2 - y1]
+                    if (this.fourInARow(board, piece, direction)) {
+                        // console.log(piece, "|", x1, y1, "|", x2, y2)
+                        gameWon = true
+                        posWin.push([x1, y1], [x2, y2])
+                    }
+                })
+            }
+        }
+        if (gameWon) {
+            posWin.forEach(([row, col]) => {
+                gState.board[row][col].node
+                    .getComponent(Animation)
+                    .play("wipwip")
+            })
+        }
 
-        store.dispatch({
-            type: GameAction.ADD_COIN,
-            data: [row, column, color],
-        })
+        return gameWon
+    }
+    private adjacentPieces(board, pos) {
+        const [x1, y1] = pos
+        const adjacentPieces = []
+        for (let x2 = x1 - 1; x2 <= x1 + 1; x2++) {
+            for (let y2 = y1 - 1; y2 <= y1 + 1; y2++) {
+                if (
+                    (x2 === x1 && y2 === y1) ||
+                    x2 < 0 ||
+                    x2 > 5 ||
+                    y2 < 0 ||
+                    y2 > 6
+                )
+                    continue
+                if (board[x2][y2]) adjacentPieces.push([x2, y2])
+            }
+        }
+        return adjacentPieces
+    }
+    private fourInARow(board, piece, direction) {
+        let [x, y] = piece
+        const [dx, dy] = direction
+        if (
+            x + 3 * dx < 0 ||
+            x + 3 * dx > 5 ||
+            y + 3 * dy < 0 ||
+            y + 3 * dy > 6
+        )
+            return false
+        return (
+            board[x + dx][y + dy] &&
+            board[x + 2 * dx][y + 2 * dy] &&
+            board[x + 3 * dx][y + 3 * dy]
+        )
     }
 }
 

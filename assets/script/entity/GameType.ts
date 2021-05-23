@@ -1,3 +1,5 @@
+import { Node } from "cc"
+
 export enum CoinColor {
     RED,
     BLUE,
@@ -7,13 +9,18 @@ export enum GameAction {
     ADD_COIN,
     SET_COIN,
     NEW_GAME,
+    SET_TRUN,
+    SWITCH_COLOR,
 }
-
+export interface BoardItem {
+    coin_color: CoinColor
+    node: Node
+}
 export interface GameState {
-    winner
-    board: Array<CoinColor[]>
+    board: Array<BoardItem[]>
     player
     waitingPlayer
+    turn_is: CoinColor
 }
 
 export interface Action {

@@ -19,5 +19,6 @@ export default (toY: number): AnimationClip => {
             commonTarget: 0,
         },
     ]
+
     return $
 }

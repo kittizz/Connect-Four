@@ -1,0 +1,100 @@
+[
+  {
+    "__type__": "cc.AnimationClip",
+    "_name": "wipwip",
+    "_objFlags": 0,
+    "_native": "",
+    "sample": 60,
+    "speed": 1,
+    "wrapMode": 54,
+    "events": [],
+    "enableTrsBlending": false,
+    "_duration": 0.31666666666666665,
+    "_keys": [
+      [
+        0.31666666666666665
+      ],
+      [
+        0.31666666666666665
+      ],
+      [
+        0.31666666666666665
+      ],
+      [
+        0,
+        0.31666666666666665
+      ]
+    ],
+    "_stepness": 0,
+    "_curves": [
+      {
+        "modifiers": [
+          "r"
+        ],
+        "data": {
+          "keys": 0,
+          "values": [
+            255
+          ],
+          "easingMethods": {}
+        },
+        "commonTarget": 0
+      },
+      {
+        "modifiers": [
+          "g"
+        ],
+        "data": {
+          "keys": 1,
+          "values": [
+            255
+          ],
+          "easingMethods": {}
+        },
+        "commonTarget": 0
+      },
+      {
+        "modifiers": [
+          "b"
+        ],
+        "data": {
+          "keys": 2,
+          "values": [
+            255
+          ],
+          "easingMethods": {}
+        },
+        "commonTarget": 0
+      },
+      {
+        "modifiers": [
+          "a"
+        ],
+        "data": {
+          "keys": 3,
+          "values": [
+            255,
+            0
+          ],
+          "easingMethods": {}
+        },
+        "commonTarget": 0
+      }
+    ],
+    "_commonTargets": [
+      {
+        "modifiers": [
+          {
+            "__id__": 1
+          },
+          "color"
+        ]
+      }
+    ],
+    "_hash": 1452186752
+  },
+  {
+    "__type__": "cc.animation.ComponentPath",
+    "component": "cc.Sprite"
+  }
+]
