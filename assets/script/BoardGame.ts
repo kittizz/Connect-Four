@@ -6,9 +6,11 @@ import {
     Node,
     Scene,
     Animation,
-    AnimationClip,
     instantiate,
-    SpriteAtlas,
+    Widget,
+    find,
+    SpriteFrame,
+    Sprite,
 } from "cc"
 import flowAnimToY from "./animationClip/flowAnimToY"
 import { Pointer } from "./entity/EventType"
@@ -20,32 +22,31 @@ const { ccclass, property } = _decorator
 
 @ccclass("BoardGame")
 export class BoardGame extends Component {
-    coinDistance = 98
+    coinDistance = 86
 
-    @property({ type: Prefab })
-    coinRED: Prefab = null
+    @property(SpriteFrame)
+    coinRED: SpriteFrame = null
+
+    @property(SpriteFrame)
+    coinBLUE: SpriteFrame = null
 
     @property(Prefab)
-    coinBLUE: Prefab = null!
+    coinPrefab: Prefab = null
 
-    @property(AnimationClip)
-    flowAnim: AnimationClip = null!
+    @property(Node)
+    nodeGame: Node
 
-    nodeCoinsContainer: Scene
-    nodeTurnBlue: Scene
-    nodeTurnRed: Scene
+    @property(Node)
+    nodeCoinsContainer: Node
 
+    @property(Node)
+    nodeTurnBlue: Node
+
+    @property(Node)
+    nodeTurnRed: Node
+
+    canPlay = true
     start() {
-        this.nodeCoinsContainer = director
-            .getScene()
-            .getChildByPath("Canvas/bg/Game/CoinsContainer")
-        this.nodeTurnRed = director
-            .getScene()
-            .getChildByPath("Canvas/bg/turn/turn-red")
-        this.nodeTurnBlue = director
-            .getScene()
-            .getChildByPath("Canvas/bg/turn/turn-blue")
-
         // this.node.on(Node.EventType.TOUCH_END, this.drawGame, this)
         director.getScene().on(Pointer.Select_COL, this.onSelectCoin, this)
         store.subscribe(() => {
@@ -82,6 +83,7 @@ export class BoardGame extends Component {
     newGame() {
         this.nodeCoinsContainer.destroyAllChildren()
         store.dispatch({ type: GameAction.NEW_GAME })
+        this.canPlay = true
     }
     renderBoard() {
         let gState: GameState = store.getState()
@@ -97,6 +99,7 @@ export class BoardGame extends Component {
         })
     }
     private onSelectCoin($: PointerTrigger) {
+        if (!this.canPlay) return
         let col = $.Col // 0-6 7 แถวแนวตั้ง
 
         let gState: GameState = store.getState()
@@ -112,6 +115,7 @@ export class BoardGame extends Component {
         // this.addCoin(coin, row, col)
 
         store.dispatch({ type: GameAction.SWITCH_COLOR })
+        this.canPlay = false
         this.addCoin(<BoardItem>{ coin_color: coin }, row, col, true)
     }
     private addCoin(
@@ -120,17 +124,23 @@ export class BoardGame extends Component {
         column: number,
         animation: boolean = true
     ) {
-        let node: Node
+        let node: Node = instantiate(this.coinPrefab)
+        let spriteFrame: SpriteFrame
         switch (bItem.coin_color) {
             case CoinColor.RED:
-                node = instantiate(this.coinRED)
+                spriteFrame = this.coinRED
                 break
             case CoinColor.BLUE:
-                node = instantiate(this.coinBLUE)
+                spriteFrame = this.coinBLUE
                 break
             default:
                 return
         }
+        node.getComponent(Sprite).spriteFrame = spriteFrame
+
+        // let widget: Widget = node.getComponent(Widget)
+        // widget.target = find("board")
+
         this.nodeCoinsContainer.addChild(node)
         bItem.node = node
         store.dispatch({
@@ -155,6 +165,7 @@ export class BoardGame extends Component {
                         //     alert("สีน้ำเงินชนะ")
                         // }
                     }
+                    this.canPlay = true
                 },
                 this
             )
@@ -181,7 +192,6 @@ export class BoardGame extends Component {
                 this.adjacentPieces(board, piece).forEach(([x2, y2]) => {
                     const direction = [x2 - x1, y2 - y1]
                     if (this.fourInARow(board, piece, direction)) {
-                        // console.log(piece, "|", x1, y1, "|", x2, y2)
                         gameWon = true
                         posWin.push([x1, y1], [x2, y2])
                     }

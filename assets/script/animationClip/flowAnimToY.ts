@@ -14,7 +14,7 @@ export default (toY: number): AnimationClip => {
             modifiers: ["y"],
             data: {
                 keys: 0,
-                values: [442, toY],
+                values: [355, toY],
             },
             commonTarget: 0,
         },

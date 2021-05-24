@@ -12,7 +12,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "coin-red",
+    "_name": "coin",
     "_objFlags": 0,
     "_parent": null,
     "_children": [],
@@ -33,9 +33,9 @@
     },
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -293,
-      "y": -244,
-      "z": -1
+      "x": -258,
+      "y": -269.0044999999999,
+      "z": 0
     },
     "_lrot": {
       "__type__": "cc.Quat",
@@ -46,9 +46,9 @@
     },
     "_lscale": {
       "__type__": "cc.Vec3",
-      "x": 0.39,
-      "y": 0.39,
-      "z": 0.32
+      "x": 0.326,
+      "y": 0.326,
+      "z": 0.326
     },
     "_layer": 33554432,
     "_euler": {
@@ -108,13 +108,10 @@
       "b": 255,
       "a": 255
     },
-    "_spriteFrame": {
-      "__uuid__": "9397be46-fb6e-4863-a821-4bce25f3187d@f9941",
-      "__expectedType__": "cc.SpriteFrame"
-    },
+    "_spriteFrame": null,
     "_type": 0,
     "_fillType": 0,
-    "_sizeMode": 1,
+    "_sizeMode": 0,
     "_fillCenter": {
       "__type__": "cc.Vec2",
       "x": 0,
@@ -164,6 +161,6 @@
     "asset": {
       "__id__": 0
     },
-    "fileId": "4cdgiKNctAkpq9RDmUTNAt"
+    "fileId": "56gfGFTDlF+KTQHBtkelb6"
   }
 ]
