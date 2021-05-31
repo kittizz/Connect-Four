@@ -11,6 +11,7 @@ import {
     find,
     SpriteFrame,
     Sprite,
+    EventTouch,
 } from "cc"
 import flowAnimToY from "./animationClip/flowAnimToY"
 import { Pointer } from "./entity/EventType"
@@ -48,7 +49,7 @@ export class BoardGame extends Component {
     canPlay = true
     start() {
         // this.node.on(Node.EventType.TOUCH_END, this.drawGame, this)
-        director.getScene().on(Pointer.Select_COL, this.onSelectCoin, this)
+        // director.getScene().on(Pointer.Select_COL, this.onSelectCoin, this)
         store.subscribe(() => {
             let gState = store.getState()
             console.log(gState)
@@ -60,7 +61,7 @@ export class BoardGame extends Component {
 
     onDestroy() {
         // this.node.off(Node.EventType.MOUSE_UP, this.drawGame, this)
-        director.getScene().off(Pointer.Select_COL, this.onSelectCoin)
+        // director.getScene().off(Pointer.Select_COL, this.onSelectCoin)
     }
     private turnBtnShow() {
         let gState = store.getState()
@@ -98,10 +99,11 @@ export class BoardGame extends Component {
             })
         })
     }
-    private onSelectCoin($: PointerTrigger) {
+    onSelectCoin($: EventTouch, e: CustomEvent) {
         if (!this.canPlay) return
-        let col = $.Col // 0-6 7 แถวแนวตั้ง
-
+        let col = Number(e)
+        let target = <Node>$.target
+        target.active = true
         let gState: GameState = store.getState()
         let row = GetColCanDrop(gState.board, col)[0]
 
